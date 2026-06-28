@@ -29,12 +29,12 @@ enum struct Op {
 struct Value {
     float data;
     float grad = 0.0;
-    std::vector<const Value*> prev;
+    std::vector<Value*> prev;
     Op op = Op::NONE;
     std::function<void()> backward = [](){};
 
     constexpr Value(float f): data(f), prev({}) {}
-    constexpr Value(float f, std::vector<const Value*> children, Op o):
+    constexpr Value(float f, std::vector<Value*> children, Op o):
         data(f), prev(children), op(o) {}
 
     static constexpr Value Random(float min, float max) {
@@ -85,17 +85,18 @@ struct Value {
         return *this * tmp;
     }
 
-    [[nodiscard]] constexpr bool operator==(const Value& other) const {
+    [[nodiscard]] constexpr bool operator==(const Value& other) {
         return data == other.data && grad == other.grad;
     }
 
-    [[nodiscard]] constexpr Value operator/(const Value& other) const {
+    [[nodiscard]] constexpr Value operator/(Value& other) {
         Value out = Value(data / other.data, {this, &other}, Op::DIV);
         return out;
     }
 
-    [[nodiscard]] constexpr Value operator/(float f) const {
-        return *this / Value(f);
+    [[nodiscard]] constexpr Value operator/(float f) {
+        Value prev = Value(f);
+        return *this / prev;
     }
 
 
@@ -110,26 +111,30 @@ struct Value {
     }
 
     void backprop() {
-        std::stack<Value> topo = {};
-        std::vector<Value> visited = {};
-    
-        std::function<void(const Value&)> impl = [&](const Value& v) {
-            if (std::find(visited.begin(), visited.end(), v) == visited.end()) {
+        std::vector<Value*> topo = {};
+        std::vector<Value*> visited = {};
+
+        std::function<void(Value*)> impl = [&](Value* v) {
+            if (v && std::find(visited.begin(), visited.end(), v) == visited.end()) {
                 visited.push_back(v);
-    
-                for (auto child: v.prev) {
-                    impl(*child);
+
+                for (auto child : v->prev) {
+                    impl(child);
                 }
-    
-                topo.push(v);
+
+                topo.push_back(v);
             }
         };
-    
-        impl(*this);
+
+        impl(this);
         grad = 1.0;
 
-        std::for_each(visited.rbegin(), visited.rend(), [](Value v){  v.backward(); });
-    }
+        for (auto it = topo.rbegin(); it != topo.rend(); ++it) {
+            (*it)->backward();
+        }
+}
+
+
 
 };
 
@@ -179,7 +184,7 @@ struct MLP {
         std::vector sz = {inputs};
         sz.insert(sz.end(), outputs.begin(), outputs.end());
 
-        for (int i = 0; i < outputs.size(); i++) {
+        for (std::size_t i = 0; i < outputs.size(); i++) {
             layers.push_back(Layer(sz.at(i), sz.at(i + 1)));
         }
     }
