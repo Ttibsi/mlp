@@ -125,7 +125,7 @@ struct Value: std::enable_shared_from_this<Value> {
         );
 
         out->backward = [self, out]() mutable {
-            self->grad += sigmoidfDerivative(out->grad);
+            self->grad += sigmoidfDerivative(out->data) * out->grad;
         };
 
         return out;
