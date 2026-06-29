@@ -6,10 +6,11 @@ int main() {
 
     MLP mlp = MLP(2, {2, 1});
     for (int i = 0; i < iterations; i++) {
-        for (auto v: mlp({1.0, 0.0})) {
-            std::println("{}", v);
-            v.backprop();
+        auto outputs = mlp({Value::Create(1.0f), Value::Create(0.0f)});
+        for (const auto& v : outputs) {
+            std::println("{}", *v);
+            v->backprop();
         }
     }
-
 }
+
