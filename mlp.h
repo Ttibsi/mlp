@@ -41,15 +41,20 @@ struct Value: std::enable_shared_from_this<Value> {
     Value(float f, std::vector<ValuePtr_t> children, Op o):
         data(f), prev(std::move(children)), op(o) {}
 
-    static ValuePtr_t Create(float f) {
+    [[nodiscard]] static constexpr ValuePtr_t Create(float f) {
         return std::make_shared<Value>(f);
     }
 
-    static ValuePtr_t Random(float min, float max) {
+    [[nodiscard]] static constexpr ValuePtr_t Random(float min, float max) {
         static std::random_device rd;
         static std::mt19937 gen(rd());
         std::uniform_real_distribution<float> dist(min, max);
         return Create(dist(gen));
+    }
+
+    // Mean square error
+    [[nodiscard]] static constexpr Value loss(Value expected, ValuePtr_t actual) {
+        return Value((actual->data - expected.data) * (actual->data - expected.data));
     }
 
     [[nodiscard]] ValuePtr_t add(const ValuePtr_t& other) {
