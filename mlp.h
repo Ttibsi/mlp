@@ -226,8 +226,25 @@ struct std::formatter<Value> {
     constexpr auto parse(std::format_parse_context& ctx) const {
         return ctx.begin(); 
     }
-    constexpr auto format(const Value& v, std::format_context& ctx) const {
+
+    template<class OutputIt, class CharT>
+    constexpr auto format(const Value& v, std::basic_format_context<OutputIt, CharT>& ctx) const {
         return std::format_to(ctx.out(), "Value({:.5f}, {:.5f})", v.data, v.grad);
+    }
+};
+
+template <>
+struct std::formatter<ValuePtr_t> {
+    constexpr auto parse(std::format_parse_context& ctx) const {
+        return ctx.begin();
+    }
+
+    template<class OutputIt, class CharT>
+    constexpr auto format(const ValuePtr_t& v, std::basic_format_context<OutputIt, CharT>& ctx) const {
+        if (!v) {
+            return std::format_to(ctx.out(), "Value(null)");
+        }
+        return std::format_to(ctx.out(), "Value({:.5f}, {:.5f})", v->data, v->grad);
     }
 };
 
