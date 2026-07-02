@@ -1,0 +1,22 @@
+#include <print>
+#include "mlp.h"
+
+int main() {
+    std::vector<std::vector<ValuePtr_t>> xs = {
+        {Value::Create(2.0), Value::Create(3.0), Value::Create(-1.0)},
+        {Value::Create(3.0), Value::Create(-1.0), Value::Create(0.5)},
+        {Value::Create(0.5), Value::Create(1.0), Value::Create(1.0)},
+        {Value::Create(1.0), Value::Create(1.0), Value::Create(-1.0)}
+    };
+
+    std::vector<Value> ys = {Value(1.0), Value(-1.0), Value(-1.0), Value(1.0)};
+
+    MLP n = MLP(3, {4,4,1});
+    std::vector<std::vector<ValuePtr_t>> ypreds = {};
+    for (auto x: xs) {
+        ypreds.push_back(n(x));
+    }
+
+    std::vector<Value> losses = n.calcLosses(ys, ypreds);
+    std::println("{}", losses);
+}
