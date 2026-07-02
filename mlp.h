@@ -219,6 +219,16 @@ struct MLP {
 
         return inputs;
     }
+
+    using ValuePtr_Vec2d_t = std::vector<std::vector<ValuePtr_t>>;
+    [[nodiscard]] constexpr std::vector<Value> calcLosses(std::vector<Value> expected, ValuePtr_Vec2d_t actuals) const {
+        std::vector<Value> losses = {};
+        for (auto [ex, actual] : std::views::zip(expected, actuals)) {
+            losses.push_back(Value::loss(ex, actual.at(0)));
+        }
+
+        return losses;
+    }
 };
 
 template <>
