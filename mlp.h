@@ -53,8 +53,9 @@ struct Value: std::enable_shared_from_this<Value> {
     }
 
     // Mean square error
-    [[nodiscard]] static constexpr Value loss(Value expected, ValuePtr_t actual) {
-        return Value((actual->data - expected.data) * (actual->data - expected.data));
+    [[nodiscard]] static constexpr ValuePtr_t loss(const Value& expected, const ValuePtr_t& actual) {
+        auto diff = actual->sub(expected.data);
+        return diff->mul(diff);
     }
 
     [[nodiscard]] constexpr ValuePtr_t add(const ValuePtr_t& other) {
@@ -221,13 +222,18 @@ struct MLP {
     }
 
     using ValuePtr_Vec2d_t = std::vector<std::vector<ValuePtr_t>>;
-    [[nodiscard]] constexpr std::vector<Value> calcLosses(std::vector<Value> expected, ValuePtr_Vec2d_t actuals) const {
-        std::vector<Value> losses = {};
+    [[nodiscard]] constexpr ValuePtr_t calcLosses(const std::vector<Value>& expected, const ValuePtr_Vec2d_t& actuals) const {
+        std::vector<ValuePtr_t> losses = {};
         for (auto [ex, actual] : std::views::zip(expected, actuals)) {
             losses.push_back(Value::loss(ex, actual.at(0)));
         }
 
-        return losses;
+        return std::accumulate(
+            losses.begin(),
+            losses.end(),
+            Value::Create(0.0f),
+            [](const ValuePtr_t& acc, const ValuePtr_t& loss) { return acc->add(loss); }
+        );
     }
 };
 

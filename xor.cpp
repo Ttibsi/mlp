@@ -20,7 +20,7 @@ int main() {
             outputs.push_back(mlp(x));
         }
 
-        std::vector<Value> losses = mlp.calcLosses(expected, outputs);
-        std::println("{}", losses);
+        ValuePtr_t loss_sum = mlp.calcLosses(expected, outputs);
+        std::println("{}", loss_sum);
     }
 }
