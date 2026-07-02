@@ -37,8 +37,8 @@ struct Value: std::enable_shared_from_this<Value> {
     Op op = Op::NONE;
     std::function<void()> backward = [](){};
 
-    explicit Value(float f): data(f), prev({}) {}
-    Value(float f, std::vector<ValuePtr_t> children, Op o):
+    explicit constexpr Value(float f): data(f), prev({}) {}
+    explicit constexpr Value(float f, std::vector<ValuePtr_t> children, Op o):
         data(f), prev(std::move(children)), op(o) {}
 
     [[nodiscard]] static constexpr ValuePtr_t Create(float f) {
@@ -57,7 +57,7 @@ struct Value: std::enable_shared_from_this<Value> {
         return Value((actual->data - expected.data) * (actual->data - expected.data));
     }
 
-    [[nodiscard]] ValuePtr_t add(const ValuePtr_t& other) {
+    [[nodiscard]] constexpr ValuePtr_t add(const ValuePtr_t& other) {
         auto self = shared_from_this();
         auto out = std::make_shared<Value>(
             data + other->data,
@@ -73,17 +73,17 @@ struct Value: std::enable_shared_from_this<Value> {
         return out;
     }
 
-    [[nodiscard]] ValuePtr_t add(float f) {
+    [[nodiscard]] constexpr ValuePtr_t add(float f) {
         return add(Create(f));
     }
 
-    [[nodiscard]] ValuePtr_t sub(float f) {
+    [[nodiscard]] constexpr ValuePtr_t sub(float f) {
         auto self = shared_from_this();
         auto tmp = std::make_shared<Value>(-f, std::vector<ValuePtr_t>{self}, Op::SUB);
         return add(tmp);
     }
 
-    [[nodiscard]] ValuePtr_t mul(const ValuePtr_t& other) {
+    [[nodiscard]] constexpr ValuePtr_t mul(const ValuePtr_t& other) {
         auto self = shared_from_this();
         auto out = std::make_shared<Value>(
             data * other->data,
@@ -98,7 +98,7 @@ struct Value: std::enable_shared_from_this<Value> {
         return out;
     }
 
-    [[nodiscard]] ValuePtr_t mul(float f) {
+    [[nodiscard]] constexpr ValuePtr_t mul(float f) {
         return mul(Create(f));
     }
 
@@ -106,7 +106,7 @@ struct Value: std::enable_shared_from_this<Value> {
         return data == other.data && grad == other.grad;
     }
 
-    [[nodiscard]] ValuePtr_t div(const ValuePtr_t& other) {
+    [[nodiscard]] constexpr ValuePtr_t div(const ValuePtr_t& other) {
         auto self = shared_from_this();
         auto out = std::make_shared<Value>(
             data / other->data,
@@ -116,12 +116,12 @@ struct Value: std::enable_shared_from_this<Value> {
         return out;
     }
 
-    [[nodiscard]] ValuePtr_t div(float f) {
+    [[nodiscard]] constexpr ValuePtr_t div(float f) {
         return div(Create(f));
     }
 
 
-    [[nodiscard]] ValuePtr_t activate() {
+    [[nodiscard]] constexpr ValuePtr_t activate() {
         auto self = shared_from_this();
         auto out = std::make_shared<Value>(
             sigmoidf(data),
@@ -136,7 +136,7 @@ struct Value: std::enable_shared_from_this<Value> {
         return out;
     }
 
-    void backprop() {
+    constexpr void backprop() {
         std::vector<ValuePtr_t> topo = {};
         std::vector<ValuePtr_t> visited = {};
 
@@ -165,13 +165,13 @@ struct Neuron {
     std::vector<ValuePtr_t> weights = {};
     ValuePtr_t bias;
 
-    explicit Neuron(int inputCount) : bias(Value::Random(-1, 1)) {
+    explicit constexpr Neuron(int inputCount) : bias(Value::Random(-1, 1)) {
         for (int i = 0; i < inputCount; i++) {
             weights.push_back(Value::Random(-1, 1));
         }
     }
 
-    [[nodiscard]] ValuePtr_t operator()(const std::vector<ValuePtr_t>& inputs) {
+    [[nodiscard]] constexpr ValuePtr_t operator()(const std::vector<ValuePtr_t>& inputs) {
         assert(inputs.size() == weights.size());
 
         auto activation = bias;
@@ -187,11 +187,11 @@ struct Neuron {
 struct Layer {
     std::vector<Neuron> neurons = {};
 
-    Layer(int inputs, int outputs) {
+    explicit constexpr Layer(int inputs, int outputs) {
         for (int i = 0; i < outputs; i++) { neurons.push_back(Neuron(inputs)); }
     }
 
-    [[nodiscard]] std::vector<ValuePtr_t> operator()(const std::vector<ValuePtr_t>& inputs) {
+    [[nodiscard]] constexpr std::vector<ValuePtr_t> operator()(const std::vector<ValuePtr_t>& inputs) {
         std::vector<ValuePtr_t> outs = {};
         std::for_each(neurons.begin(), neurons.end(), [&](Neuron& n) mutable {
                 outs.push_back(n(inputs)); 
@@ -203,7 +203,7 @@ struct Layer {
 struct MLP {
     std::vector<Layer> layers = {};
 
-    MLP(int inputs, std::vector<int> outputs) {
+    explicit constexpr MLP(int inputs, std::vector<int> outputs) {
         std::vector sz = {inputs};
         sz.insert(sz.end(), outputs.begin(), outputs.end());
 
@@ -212,7 +212,7 @@ struct MLP {
         }
     }
 
-    [[nodiscard]] std::vector<ValuePtr_t> operator()(std::vector<ValuePtr_t> inputs) {
+    [[nodiscard]] constexpr std::vector<ValuePtr_t> operator()(std::vector<ValuePtr_t> inputs) {
         for (auto&& l: layers) {
             inputs = l(inputs);
         }
