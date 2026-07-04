@@ -12,18 +12,19 @@ int main() {
     std::vector<Value> ys = {Value(1.0), Value(-1.0), Value(-1.0), Value(1.0)};
 
     MLP n = MLP(3, {4,4,1});
-    std::vector<std::vector<ValuePtr_t>> ypreds = {};
-    for (auto x: xs) {
-        ypreds.push_back(n(x));
-    }
+    // std::vector<std::vector<ValuePtr_t>> ypreds = {};
+    // for (auto x: xs) {
+    //     ypreds.push_back(n(x));
+    // }
+    //
+    // ValuePtr_t loss_rate = n.calcLosses(ys, ypreds);
+    // loss_rate->backprop();
+    // // std::println("avg loss = {}", loss_rate);
+    //
+    // ValuePtr_t v = n.layers.at(0).neurons.at(0).weights.at(0);
+    // std::println("v = {}", v);
 
-    ValuePtr_t avg_loss = n.calcLosses(ys, ypreds);
-    avg_loss->backprop();
-    // std::println("avg loss = {}", avg_loss);
-
-    ValuePtr_t v = n.layers.at(0).neurons.at(0).weights.at(0);
-    std::println("v = {}", v);
-
-    n.gradientDescent(-0.01);
-    std::println("v = {}", v);
+    n.gradientDescent(0.01, 10, xs, ys);
+    // v = n.layers.at(0).neurons.at(0).weights.at(0);
+    // std::println("v = {}", v);
 }

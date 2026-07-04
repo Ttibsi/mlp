@@ -249,12 +249,28 @@ struct MLP {
         return params;
     }
 
-    constexpr void gradientDescent(const float loss) const {
-        assert(loss < 0.0 && "loss should be negative");
+    constexpr void gradientDescent(float learn_rate, const std::size_t iterations, ValuePtr_Vec2d_t xs, std::vector<Value> ys) {
+        for (std::size_t i = 0; i < iterations; i++) {
+            // forward pass
+            ValuePtr_Vec2d_t ypreds = {};
+            for (auto x: xs) {
+                ypreds.push_back((*this)(x));
+            }
 
-        for (ValuePtr_t p: parameters()) {
-            p->data += loss * p->grad;
+            // calculate loss
+            ValuePtr_t loss_rate = calcLosses(ys, ypreds);
+            loss_rate->backprop();
+            // TODO: exit out here somehow?
+
+            // Step size?
+            const bool isNegative = layers.at(0).neurons.at(0).weights.at(0)->data < 0.0;
+            if (isNegative) { learn_rate = 0 - learn_rate; };
+
+            for (ValuePtr_t p: parameters()) {
+                p->data += learn_rate * p->grad;
+            }
         }
+
     }
 };
 
