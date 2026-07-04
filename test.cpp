@@ -19,8 +19,11 @@ int main() {
 
     ValuePtr_t avg_loss = n.calcLosses(ys, ypreds);
     avg_loss->backprop();
-    std::println("avg loss = {}", avg_loss);
+    // std::println("avg loss = {}", avg_loss);
 
-    auto v = n.layers.at(0).neurons.at(0).weights.at(0);
+    ValuePtr_t v = n.layers.at(0).neurons.at(0).weights.at(0);
+    std::println("v = {}", v);
+
+    n.gradientDescent(-0.01);
     std::println("v = {}", v);
 }

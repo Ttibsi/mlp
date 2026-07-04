@@ -221,6 +221,7 @@ struct MLP {
         return inputs;
     }
 
+
     using ValuePtr_Vec2d_t = std::vector<std::vector<ValuePtr_t>>;
     [[nodiscard]] constexpr ValuePtr_t calcLosses(const std::vector<Value>& expected, const ValuePtr_Vec2d_t& actuals) const {
         std::vector<ValuePtr_t> losses = {};
@@ -234,6 +235,26 @@ struct MLP {
             Value::Create(0.0f),
             [](const ValuePtr_t& acc, const ValuePtr_t& loss) { return acc->add(loss); }
         );
+    }
+
+    [[nodiscard]] constexpr std::vector<ValuePtr_t> parameters() const {
+        std::vector<ValuePtr_t> params = {};
+        for (const auto& layer : layers) {
+            for (const auto& neuron : layer.neurons) {
+                params.insert(params.end(), neuron.weights.begin(), neuron.weights.end());
+                params.push_back(neuron.bias);
+            }
+        }
+
+        return params;
+    }
+
+    constexpr void gradientDescent(const float loss) const {
+        assert(loss < 0.0 && "loss should be negative");
+
+        for (ValuePtr_t p: parameters()) {
+            p->data += loss * p->grad;
+        }
     }
 };
 
