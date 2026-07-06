@@ -309,7 +309,7 @@ struct MLP {
                 p->data += -learn_rate * p->grad;
             }
 
-            std::println("[DEBUG] iteration: {}, loss: {}", i, loss_rate->data);
+            // std::println("[DEBUG] iteration: {}, loss: {}", i, loss_rate->data);
         }
 
         std::vector<ValuePtr_t> ret = {};
