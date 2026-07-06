@@ -14,13 +14,7 @@ int main() {
     std::vector<Value> expected = {Value(0), Value(1), Value(1), Value(1)};
 
     MLP mlp = MLP(2, {2, 1});
-    for (int i = 0; i < iterations; i++) {
-        std::vector<std::vector<ValuePtr_t>> outputs = {};
-        for (auto x: inputs) {
-            outputs.push_back(mlp(x));
-        }
-
-        ValuePtr_t loss_sum = mlp.calcLosses(expected, outputs);
-        std::println("{}", loss_sum);
-    }
+    mlp.setDimensions(inputs, expected);
+    std::vector<ValuePtr_t> result = mlp.gradientDescent(0.5, 300);
+    std::println("{}", result);
 }

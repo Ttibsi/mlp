@@ -24,7 +24,8 @@ int main() {
     // ValuePtr_t v = n.layers.at(0).neurons.at(0).weights.at(0);
     // std::println("v = {}", v);
 
-    auto ret = n.gradientDescent(0.01, 500, xs, ys);
+    n.setDimensions(xs, ys);
+    auto ret = n.gradientDescent(0.01, 500);
     std::println("{}", ret);
     // v = n.layers.at(0).neurons.at(0).weights.at(0);
     // std::println("v = {}", v);

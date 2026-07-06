@@ -29,6 +29,7 @@ enum struct Op {
 
 struct Value;
 using ValuePtr_t = std::shared_ptr<Value>;
+using ValuePtr_Vec2d_t = std::vector<std::vector<ValuePtr_t>>;
 
 struct Value: std::enable_shared_from_this<Value> {
     float data;
@@ -162,6 +163,33 @@ struct Value: std::enable_shared_from_this<Value> {
     }
 };
 
+template <>
+struct std::formatter<Value> {
+    constexpr auto parse(std::format_parse_context& ctx) const {
+        return ctx.begin(); 
+    }
+
+    template<class OutputIt, class CharT>
+    constexpr auto format(const Value& v, std::basic_format_context<OutputIt, CharT>& ctx) const {
+        return std::format_to(ctx.out(), "Value({:.5f}, {:.5f})", v.data, v.grad);
+    }
+};
+
+template <>
+struct std::formatter<ValuePtr_t> {
+    constexpr auto parse(std::format_parse_context& ctx) const {
+        return ctx.begin();
+    }
+
+    template<class OutputIt, class CharT>
+    constexpr auto format(const ValuePtr_t& v, std::basic_format_context<OutputIt, CharT>& ctx) const {
+        if (!v) {
+            return std::format_to(ctx.out(), "Value(null)");
+        }
+        return std::format_to(ctx.out(), "Value({:.5f}, {:.5f})", v->data, v->grad);
+    }
+};
+
 struct Neuron {
     std::vector<ValuePtr_t> weights = {};
     ValuePtr_t bias;
@@ -203,6 +231,8 @@ struct Layer {
 
 struct MLP {
     std::vector<Layer> layers = {};
+    ValuePtr_Vec2d_t xs;
+    std::vector<Value> ys;
 
     explicit constexpr MLP(int inputs, std::vector<int> outputs) {
         std::vector sz = {inputs};
@@ -222,7 +252,6 @@ struct MLP {
     }
 
 
-    using ValuePtr_Vec2d_t = std::vector<std::vector<ValuePtr_t>>;
     [[nodiscard]] constexpr ValuePtr_t calcLosses(const std::vector<Value>& expected, const ValuePtr_Vec2d_t& actuals) const {
         std::vector<ValuePtr_t> losses = {};
         for (auto [ex, actual] : std::views::zip(expected, actuals)) {
@@ -249,7 +278,12 @@ struct MLP {
         return params;
     }
 
-    constexpr std::vector<ValuePtr_t> gradientDescent(float learn_rate, const std::size_t iterations, ValuePtr_Vec2d_t xs, std::vector<Value> ys) {
+    constexpr void setDimensions(ValuePtr_Vec2d_t xs, std::vector<Value> ys) {
+        this->xs = xs;
+        this->ys = ys;
+    }
+
+    [[nodiscard]] constexpr std::vector<ValuePtr_t> gradientDescent(float learn_rate, const std::size_t iterations) {
         ValuePtr_Vec2d_t ypreds = {};
         for (std::size_t i = 0; i < iterations; i++) {
             ypreds.clear();
@@ -274,6 +308,8 @@ struct MLP {
             for (const ValuePtr_t& p: params) {
                 p->data += -learn_rate * p->grad;
             }
+
+            std::println("[DEBUG] iteration: {}, loss: {}", i, loss_rate->data);
         }
 
         std::vector<ValuePtr_t> ret = {};
@@ -282,30 +318,4 @@ struct MLP {
     }
 };
 
-template <>
-struct std::formatter<Value> {
-    constexpr auto parse(std::format_parse_context& ctx) const {
-        return ctx.begin(); 
-    }
-
-    template<class OutputIt, class CharT>
-    constexpr auto format(const Value& v, std::basic_format_context<OutputIt, CharT>& ctx) const {
-        return std::format_to(ctx.out(), "Value({:.5f}, {:.5f})", v.data, v.grad);
-    }
-};
-
-template <>
-struct std::formatter<ValuePtr_t> {
-    constexpr auto parse(std::format_parse_context& ctx) const {
-        return ctx.begin();
-    }
-
-    template<class OutputIt, class CharT>
-    constexpr auto format(const ValuePtr_t& v, std::basic_format_context<OutputIt, CharT>& ctx) const {
-        if (!v) {
-            return std::format_to(ctx.out(), "Value(null)");
-        }
-        return std::format_to(ctx.out(), "Value({:.5f}, {:.5f})", v->data, v->grad);
-    }
-};
 
