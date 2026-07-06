@@ -20,7 +20,7 @@ enum struct Op {
 };
 
 [[nodiscard]] constexpr float sigmoidf(const float x) {
-    return 1.f / (1.f + std::expf(x));
+    return 1.f / (1.f + std::expf(-x));
 }
 
 [[nodiscard]] constexpr float sigmoidfDerivative(const float x) {
@@ -249,7 +249,7 @@ struct MLP {
         return params;
     }
 
-    constexpr ValuePtr_Vec2d_t gradientDescent(float learn_rate, const std::size_t iterations, ValuePtr_Vec2d_t xs, std::vector<Value> ys) {
+    constexpr std::vector<ValuePtr_t> gradientDescent(float learn_rate, const std::size_t iterations, ValuePtr_Vec2d_t xs, std::vector<Value> ys) {
         ValuePtr_Vec2d_t ypreds = {};
         for (std::size_t i = 0; i < iterations; i++) {
             ypreds.clear();
@@ -261,25 +261,24 @@ struct MLP {
             // calculate loss
             ValuePtr_t loss_rate = calcLosses(ys, ypreds);
 
+            // zero gradients
+            auto params = parameters();
+            for (const ValuePtr_t& p: params) {
+                p->grad = 0.0f;
+            }
+
             // backward pass
             loss_rate->backprop();
 
-            // Correctly set learn_rate
-            const bool isNegative = layers.at(0).neurons.at(0).weights.at(0)->data < 0.0;
-            if (isNegative) { learn_rate = 0 - learn_rate; };
-
             // update
-            for (ValuePtr_t p: parameters()) {
-                p->data += learn_rate * p->grad;
+            for (const ValuePtr_t& p: params) {
+                p->data += -learn_rate * p->grad;
             }
         }
 
-        // TODO: Should be returning like this?
-        // std::vector<ValuePtr_t> ret = {};
-        // for (auto inner: ypreds) { ret.push_back(inner.at(0)); }
-        // return ret;
-
-        return ypreds;
+        std::vector<ValuePtr_t> ret = {};
+        for (const auto& inner: ypreds) { ret.push_back(inner.at(0)); }
+        return ret;
     }
 };
 
