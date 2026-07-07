@@ -232,7 +232,7 @@ struct Layer {
 struct MLP {
     std::vector<Layer> layers = {};
     ValuePtr_Vec2d_t xs;
-    std::vector<Value> ys;
+    ValuePtr_Vec2d_t ys;
 
     explicit constexpr MLP(int inputs, std::vector<int> outputs) {
         std::vector sz = {inputs};
@@ -252,10 +252,15 @@ struct MLP {
     }
 
 
-    [[nodiscard]] constexpr ValuePtr_t calcLosses(const std::vector<Value>& expected, const ValuePtr_Vec2d_t& actuals) const {
+    [[nodiscard]] constexpr ValuePtr_t calcLosses(const ValuePtr_Vec2d_t& expected, const ValuePtr_Vec2d_t& actuals) const {
         std::vector<ValuePtr_t> losses = {};
-        for (auto [ex, actual] : std::views::zip(expected, actuals)) {
-            losses.push_back(Value::loss(ex, actual.at(0)));
+        assert(expected.size() == actuals.size());
+
+        for (auto [expected_sample, actual_sample] : std::views::zip(expected, actuals)) {
+            assert(expected_sample.size() == actual_sample.size());
+            for (auto [expected_output, actual_output] : std::views::zip(expected_sample, actual_sample)) {
+                losses.push_back(Value::loss(*expected_output, actual_output));
+            }
         }
 
         return std::accumulate(
@@ -278,12 +283,12 @@ struct MLP {
         return params;
     }
 
-    constexpr void setDimensions(ValuePtr_Vec2d_t xs, std::vector<Value> ys) {
+    constexpr void setDimensions(ValuePtr_Vec2d_t xs, ValuePtr_Vec2d_t ys) {
         this->xs = xs;
         this->ys = ys;
     }
 
-    [[nodiscard]] constexpr std::vector<ValuePtr_t> gradientDescent(float learn_rate, const std::size_t iterations) {
+    [[nodiscard]] constexpr ValuePtr_Vec2d_t gradientDescent(float learn_rate, const std::size_t iterations) {
         ValuePtr_Vec2d_t ypreds = {};
         for (std::size_t i = 0; i < iterations; i++) {
             ypreds.clear();
@@ -312,9 +317,7 @@ struct MLP {
             // std::println("[DEBUG] iteration: {}, loss: {}", i, loss_rate->data);
         }
 
-        std::vector<ValuePtr_t> ret = {};
-        for (const auto& inner: ypreds) { ret.push_back(inner.at(0)); }
-        return ret;
+        return ypreds;
     }
 };
 

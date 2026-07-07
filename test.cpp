@@ -9,7 +9,12 @@ int main() {
         {Value::Create(1.0), Value::Create(1.0), Value::Create(-1.0)}
     };
 
-    std::vector<Value> ys = {Value(1.0), Value(0.0), Value(0.0), Value(1.0)};
+    std::vector<std::vector<ValuePtr_t>> ys = {
+        {Value::Create(1.0)},
+        {Value::Create(0.0)},
+        {Value::Create(0.0)},
+        {Value::Create(1.0)}
+    };
 
     MLP n = MLP(3, {4,4,1});
     // std::vector<std::vector<ValuePtr_t>> ypreds = {};
