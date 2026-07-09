@@ -24,11 +24,20 @@ struct Image {
     constexpr std::vector<ValuePtr_t> toValues() {
         std::vector<ValuePtr_t> ret = {};
 
+        for (int i = 0; i < height * width; i++) {
+            ret.push_back(Value::Create(data[i]));
+        }
+
         return ret;
     }
 
     constexpr std::vector<ValuePtr_t> expectedValue() {
         std::vector<ValuePtr_t> ret = {};
+
+        for (int i = 0; i < 10; i++) {
+            if (i == img_value) { ret.push_back(Value::Create(0.0)); }
+            else { ret.push_back(Value::Create(1.0)); }
+        }
 
         return ret;
     }
@@ -57,9 +66,10 @@ int main() {
     mlp.setDimensions(inputs, expected);
 
     // step 2: train an mlp on each image
-    const int iterations = 1000;
+    const int iterations = 5;
     const float rate = 0.1;
-    std::vector<std::vector<ValuePtr_t> result = mlp.gradientDescent(rate, iterations);
+    std::vector<std::vector<ValuePtr_t>> result = mlp.gradientDescent(rate, iterations);
+    std::println("{}", result);
 
     // step 3: open a gui with:
         // 28x28 "pad" to draw in 
