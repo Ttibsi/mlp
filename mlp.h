@@ -8,6 +8,7 @@
 #include <random>
 #include <ranges>
 #include <stack>
+#include <unordered_set>
 #include <vector>
 
 enum struct Op {
@@ -140,11 +141,11 @@ struct Value: std::enable_shared_from_this<Value> {
 
     constexpr void backprop() {
         std::vector<ValuePtr_t> topo = {};
-        std::vector<ValuePtr_t> visited = {};
+        std::unordered_set<const Value*> visited = {};
 
         std::function<void(const ValuePtr_t&)> impl = [&](const ValuePtr_t& v) {
-            if (v && std::find(visited.begin(), visited.end(), v) == visited.end()) {
-                visited.push_back(v);
+            if (v && !visited.contains(v.get())) {
+                visited.insert(v.get());
 
                 for (const auto& child : v->prev) {
                     impl(child);
@@ -316,7 +317,7 @@ struct MLP {
                 p->data += -learn_rate * p->grad;
             }
 
-            // std::println("[DEBUG] iteration: {}, loss: {}", i, loss_rate->data);
+            std::println("[DEBUG] iteration: {}, loss: {}", i, loss_rate->data);
         }
 
         return ypreds;

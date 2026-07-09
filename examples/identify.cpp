@@ -61,9 +61,11 @@ int main() {
             int digit = std::stoi(digit_dir.path().filename().string());
             for (const auto& entry : fs::directory_iterator(digit_dir.path())) {
                 if (entry.is_regular_file()) {
-                    Image i = Image(entry.path().filename(), digit);
+                    Image i = Image(entry.path().string(), digit);
                     inputs.push_back(i.toValues());
                     expected.push_back(i.expectedValue());
+
+                    std::println("Trained: {}", entry.path().string());
                 }
             }
         }
@@ -76,7 +78,6 @@ int main() {
     const int iterations = 5;
     const float rate = 0.1;
     std::vector<std::vector<ValuePtr_t>> result = mlp.gradientDescent(rate, iterations);
-    std::println("{}", result);
 
     // step 3: open a gui with:
         // 28x28 "pad" to draw in 
