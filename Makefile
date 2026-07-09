@@ -1,9 +1,12 @@
+CFLAGS = -std=c++23 -g -Wall -Wextra -lm
+
 .PHONY: all
 all:
-	g++ -std=c++23 xor.cpp -g -Wall -Wextra -o xor
-	g++ -std=c++23 test.cpp -g -Wall -Wextra -o test
-	g++ -std=c++23 identify.cpp -g -Wall -Wextra -o identify -lm
+	mkdir -p bin
+	g++ $(CFLAGS) examples/xor.cpp -o bin/xor
+	g++ $(CFLAGS) examples/test.cpp -o bin/test
+	g++ $(CFLAGS) examples/identify.cpp -o bin/identify
 
 .PHONY: clean
 clean:
-	rm -rf xor test identify
+	rm -rf bin
