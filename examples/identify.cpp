@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <string>
+#include <print>
 
 #include "../mlp.h"
 
@@ -55,14 +56,20 @@ int main() {
     std::vector<std::vector<ValuePtr_t>> inputs = {};
     std::vector<std::vector<ValuePtr_t>> expected = {};
 
-    for (const auto& entry : fs::directory_iterator("mnist")) {
-        if (entry.is_regular_file()) {
-            Image i = Image(entry.path().filename(), 0);
-            inputs.push_back(i.toValues());
-            expected.push_back(i.expectedValue());
+    for (const auto& digit_dir : fs::directory_iterator("mnist")) {
+        if (digit_dir.is_directory()) {
+            int digit = std::stoi(digit_dir.path().filename().string());
+            for (const auto& entry : fs::directory_iterator(digit_dir.path())) {
+                if (entry.is_regular_file()) {
+                    Image i = Image(entry.path().filename(), digit);
+                    inputs.push_back(i.toValues());
+                    expected.push_back(i.expectedValue());
+                }
+            }
         }
     }
 
+    std::println("Inputs: {}, outputs: {}", inputs.size(), expected.size());
     mlp.setDimensions(inputs, expected);
 
     // step 2: train an mlp on each image

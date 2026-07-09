@@ -222,9 +222,11 @@ struct Layer {
 
     [[nodiscard]] constexpr std::vector<ValuePtr_t> operator()(const std::vector<ValuePtr_t>& inputs) {
         std::vector<ValuePtr_t> outs = {};
-        std::for_each(neurons.begin(), neurons.end(), [&](Neuron& n) mutable {
-                outs.push_back(n(inputs)); 
-                });
+        std::for_each(
+            neurons.begin(),
+            neurons.end(),
+            [&](Neuron& n) mutable { outs.push_back(n(inputs)); }
+        );
         return outs;
     }
 };
