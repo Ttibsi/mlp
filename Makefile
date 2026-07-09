@@ -6,4 +6,4 @@ all:
 
 .PHONY: clean
 clean:
-	rm -rf xor test
+	rm -rf xor test identify
