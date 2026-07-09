@@ -24,6 +24,7 @@ struct Image {
 
     constexpr std::vector<ValuePtr_t> toValues() {
         std::vector<ValuePtr_t> ret = {};
+        ret.reserve(height*width);
 
         for (int i = 0; i < height * width; i++) {
             ret.push_back(Value::Create(data[i]));
@@ -34,6 +35,7 @@ struct Image {
 
     constexpr std::vector<ValuePtr_t> expectedValue() {
         std::vector<ValuePtr_t> ret = {};
+        ret.reserve(10);
 
         for (int i = 0; i < 10; i++) {
             if (i == img_value) { ret.push_back(Value::Create(0.0)); }
