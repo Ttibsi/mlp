@@ -158,7 +158,7 @@ struct Value: std::enable_shared_from_this<Value> {
         impl(shared_from_this());
         grad = 1.0;
 
-        for (auto it = topo.rbegin(); it != topo.rend(); ++it) {
+        for (auto&& it = topo.rbegin(); it != topo.rend(); ++it) {
             (*it)->backward();
         }
     }
@@ -206,7 +206,7 @@ struct Neuron {
         assert(inputs.size() == weights.size());
 
         auto activation = bias;
-        for (auto [wi, xi] : std::views::zip(weights, inputs)) {
+        for (auto&& [wi, xi] : std::views::zip(weights, inputs)) {
             auto calc = wi->mul(xi);
             activation = activation->add(calc);
         }
@@ -304,7 +304,7 @@ struct MLP {
         for (std::size_t i = 0; i < iterations; i++) {
             ypreds.clear();
             // forward pass
-            for (auto x: xs) {
+            for (auto&& x: xs) {
                 ypreds.push_back((*this)(x));
             }
 
