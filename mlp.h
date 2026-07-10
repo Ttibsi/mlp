@@ -8,6 +8,7 @@
 #include <random>
 #include <ranges>
 #include <stack>
+#include <unordered_set>
 #include <vector>
 
 enum struct Op {
@@ -140,11 +141,11 @@ struct Value: std::enable_shared_from_this<Value> {
 
     constexpr void backprop() {
         std::vector<ValuePtr_t> topo = {};
-        std::vector<ValuePtr_t> visited = {};
+        std::unordered_set<const Value*> visited = {};
 
         std::function<void(const ValuePtr_t&)> impl = [&](const ValuePtr_t& v) {
-            if (v && std::find(visited.begin(), visited.end(), v) == visited.end()) {
-                visited.push_back(v);
+            if (v && !visited.contains(v.get())) {
+                visited.insert(v.get());
 
                 for (const auto& child : v->prev) {
                     impl(child);
@@ -157,7 +158,7 @@ struct Value: std::enable_shared_from_this<Value> {
         impl(shared_from_this());
         grad = 1.0;
 
-        for (auto it = topo.rbegin(); it != topo.rend(); ++it) {
+        for (auto&& it = topo.rbegin(); it != topo.rend(); ++it) {
             (*it)->backward();
         }
     }
@@ -195,6 +196,7 @@ struct Neuron {
     ValuePtr_t bias;
 
     explicit constexpr Neuron(int inputCount) : bias(Value::Random(-1, 1)) {
+        weights.reserve(inputCount);
         for (int i = 0; i < inputCount; i++) {
             weights.push_back(Value::Random(-1, 1));
         }
@@ -204,7 +206,7 @@ struct Neuron {
         assert(inputs.size() == weights.size());
 
         auto activation = bias;
-        for (auto [wi, xi] : std::views::zip(weights, inputs)) {
+        for (auto&& [wi, xi] : std::views::zip(weights, inputs)) {
             auto calc = wi->mul(xi);
             activation = activation->add(calc);
         }
@@ -217,14 +219,19 @@ struct Layer {
     std::vector<Neuron> neurons = {};
 
     explicit constexpr Layer(int inputs, int outputs) {
+        neurons.reserve(outputs);
         for (int i = 0; i < outputs; i++) { neurons.push_back(Neuron(inputs)); }
     }
 
     [[nodiscard]] constexpr std::vector<ValuePtr_t> operator()(const std::vector<ValuePtr_t>& inputs) {
         std::vector<ValuePtr_t> outs = {};
-        std::for_each(neurons.begin(), neurons.end(), [&](Neuron& n) mutable {
-                outs.push_back(n(inputs)); 
-                });
+        outs.reserve(neurons.size());
+
+        std::for_each(
+            neurons.begin(),
+            neurons.end(),
+            [&](Neuron& n) mutable { outs.push_back(n(inputs)); }
+        );
         return outs;
     }
 };
@@ -236,8 +243,10 @@ struct MLP {
 
     explicit constexpr MLP(int inputs, std::vector<int> outputs) {
         std::vector sz = {inputs};
+        sz.reserve(outputs.size() + 1);
         sz.insert(sz.end(), outputs.begin(), outputs.end());
 
+        layers.reserve(outputs.size());
         for (std::size_t i = 0; i < outputs.size(); i++) {
             layers.push_back(Layer(sz.at(i), sz.at(i + 1)));
         }
@@ -254,6 +263,7 @@ struct MLP {
 
     [[nodiscard]] constexpr ValuePtr_t calcLosses(const ValuePtr_Vec2d_t& expected, const ValuePtr_Vec2d_t& actuals) const {
         std::vector<ValuePtr_t> losses = {};
+        losses.reserve(expected.size() * expected[0].size());
         assert(expected.size() == actuals.size());
 
         for (auto [expected_sample, actual_sample] : std::views::zip(expected, actuals)) {
@@ -290,10 +300,11 @@ struct MLP {
 
     [[nodiscard]] constexpr ValuePtr_Vec2d_t gradientDescent(float learn_rate, const std::size_t iterations) {
         ValuePtr_Vec2d_t ypreds = {};
+        ypreds.reserve(xs.size());
         for (std::size_t i = 0; i < iterations; i++) {
             ypreds.clear();
             // forward pass
-            for (auto x: xs) {
+            for (auto&& x: xs) {
                 ypreds.push_back((*this)(x));
             }
 
@@ -314,7 +325,7 @@ struct MLP {
                 p->data += -learn_rate * p->grad;
             }
 
-            // std::println("[DEBUG] iteration: {}, loss: {}", i, loss_rate->data);
+            std::println("[DEBUG] iteration: {}, loss: {}", i, loss_rate->data);
         }
 
         return ypreds;

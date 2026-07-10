@@ -1,5 +1,5 @@
 #include <print>
-#include "mlp.h"
+#include "../mlp.h"
 
 int main() {
     std::vector<std::vector<ValuePtr_t>> inputs = {
