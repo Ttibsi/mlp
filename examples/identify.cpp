@@ -8,16 +8,18 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../stb_image.h"
 
+#include "raylib.h"
+
 namespace fs = std::filesystem;
 
-struct Image {
+struct Mnist_Image {
     int height = 0;
     int width = 0;
     int bpp = 0;
     std::uint8_t* data;
     int img_value;
 
-    constexpr Image(const std::string& img_file, int value) {
+    constexpr Mnist_Image(const std::string& img_file, int value) {
         data = stbi_load(img_file.c_str(), &height, &width, &bpp, 3);
         img_value = value;
     }
@@ -45,7 +47,7 @@ struct Image {
         return ret;
     }
 
-    ~Image() {
+    ~Mnist_Image() {
         stbi_image_free(data);
     }
 };
@@ -63,7 +65,7 @@ int main() {
             int digit = std::stoi(digit_dir.path().filename().string());
             for (const auto& entry : fs::directory_iterator(digit_dir.path())) {
                 if (entry.is_regular_file()) {
-                    Image i = Image(entry.path().string(), digit);
+                    Mnist_Image i = Mnist_Image(entry.path().string(), digit);
                     inputs.push_back(i.toValues());
                     expected.push_back(i.expectedValue());
 
