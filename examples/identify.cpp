@@ -1,3 +1,4 @@
+#include <array>
 #include <cstdint>
 #include <filesystem>
 #include <string>
@@ -52,7 +53,7 @@ struct Mnist_Image {
     }
 };
 
-int main() {
+int main2() {
     const std::size_t img_size = 28*28;
     MLP mlp = MLP(img_size, {16, 16, 10});
 
@@ -86,4 +87,53 @@ int main() {
     // step 3: open a gui with:
         // 28x28 "pad" to draw in 
         // Visual representation of the mlp nodes (or just the output layer)
+
+    return 0;
+}
+
+int main() {
+    constexpr int button_range = 28;
+    const int button_size = 15;
+    Color tsoding = {0x18, 0x18, 0x18, 0xFF};
+
+    std::array<std::array<bool, button_range>, button_range> input = {};
+
+    InitWindow(640, 480, "Hello world");
+    while (!WindowShouldClose()) {
+        Vector2 mousePos = GetMousePosition();
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            int col = mousePos.x / button_size;
+            int row = mousePos.y / button_size;
+
+            if (col >= 0 && col < button_range && row >= 0 && row < button_range) {
+                input.at(col).at(row) = !input.at(col).at(row);
+            }
+        }
+
+        // reset
+        if (IsKeyPressed(KEY_R)) {
+            for (auto& row : input) {
+                for (auto& cell : row) {
+                    cell = false;
+                }
+            }
+        }
+
+        BeginDrawing();
+        {
+            ClearBackground(RAYWHITE);
+
+            for (int i = 0; i < button_range; i++) {
+                for (int j = 0; j < button_range; j++) {
+                    int posx = (button_size * i) + i;
+                    int posy = (button_size * j) + j;
+                    Color c = input.at(i).at(j) ? WHITE : tsoding;
+                    DrawRectangle(posx, posy, button_size, button_size, c);
+                }
+            }
+        }
+        EndDrawing();
+    }
+    CloseWindow();
+    return 0;
 }
