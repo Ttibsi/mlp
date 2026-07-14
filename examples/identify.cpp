@@ -97,7 +97,7 @@ int main2() {
 constexpr void singleFrame(std::array<std::array<bool, button_range>, button_range>& input) {
     const Color tsoding = {0x18, 0x18, 0x18, 0xFF};
     Vector2 mousePos = GetMousePosition();
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
         int col = mousePos.x / button_size;
         int row = mousePos.y / button_size;
 
