@@ -1,3 +1,4 @@
+#include <array>
 #include <cstdint>
 #include <filesystem>
 #include <string>
@@ -8,16 +9,18 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../stb_image.h"
 
+#include "raylib.h"
+
 namespace fs = std::filesystem;
 
-struct Image {
+struct Mnist_Image {
     int height = 0;
     int width = 0;
     int bpp = 0;
     std::uint8_t* data;
     int img_value;
 
-    constexpr Image(const std::string& img_file, int value) {
+    constexpr Mnist_Image(const std::string& img_file, int value) {
         data = stbi_load(img_file.c_str(), &height, &width, &bpp, 3);
         img_value = value;
     }
@@ -45,12 +48,15 @@ struct Image {
         return ret;
     }
 
-    ~Image() {
+    ~Mnist_Image() {
         stbi_image_free(data);
     }
 };
 
-int main() {
+constexpr static int button_range = 28;
+constexpr static int button_size = 15;
+
+int main2() {
     const std::size_t img_size = 28*28;
     MLP mlp = MLP(img_size, {16, 16, 10});
 
@@ -63,7 +69,7 @@ int main() {
             int digit = std::stoi(digit_dir.path().filename().string());
             for (const auto& entry : fs::directory_iterator(digit_dir.path())) {
                 if (entry.is_regular_file()) {
-                    Image i = Image(entry.path().string(), digit);
+                    Mnist_Image i = Mnist_Image(entry.path().string(), digit);
                     inputs.push_back(i.toValues());
                     expected.push_back(i.expectedValue());
 
@@ -84,4 +90,55 @@ int main() {
     // step 3: open a gui with:
         // 28x28 "pad" to draw in 
         // Visual representation of the mlp nodes (or just the output layer)
+
+    return 0;
+}
+
+constexpr void singleFrame(std::array<std::array<bool, button_range>, button_range>& input) {
+    const Color tsoding = {0x18, 0x18, 0x18, 0xFF};
+    Vector2 mousePos = GetMousePosition();
+    if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+        int col = mousePos.x / button_size;
+        int row = mousePos.y / button_size;
+
+        if (col >= 0 && col < button_range && row >= 0 && row < button_range) {
+            input.at(col).at(row) = !input.at(col).at(row);
+        }
+    }
+
+    // reset
+    if (IsKeyPressed(KEY_R)) {
+        for (auto& row : input) {
+            for (auto& cell : row) {
+                cell = false;
+            }
+        }
+    }
+
+    BeginDrawing();
+    {
+        ClearBackground(RAYWHITE);
+
+        for (int i = 0; i < button_range; i++) {
+            for (int j = 0; j < button_range; j++) {
+                int posx = (button_size * i) + i;
+                int posy = (button_size * j) + j;
+                Color c = input.at(i).at(j) ? WHITE : tsoding;
+                DrawRectangle(posx, posy, button_size, button_size, c);
+            }
+        }
+    }
+    EndDrawing();
+}
+
+int main() {
+    std::array<std::array<bool, button_range>, button_range> input = {};
+
+    InitWindow(640, 480, "Hello world");
+    while (!WindowShouldClose()) {
+        singleFrame(input);
+    }
+
+    CloseWindow();
+    return 0;
 }
